@@ -6,7 +6,7 @@
 1. connect esp8266
 4. Click the right arrow(Platform:Upload) on the blue bar at the bottom of vscode to flash
 
-# Connect
+# Cable Connect
 ## INO260
 VCC - 3V3(esp8266)
 GND - common! ground
@@ -23,3 +23,18 @@ USB - 5v(5V Buck module)
 SCL - SCL(INO260)
 SDA - SDA(INO260)
 GND - common! ground
+
+# ROS Server
+##  Install
+1. Install ROS (recommand [Melodic](http://wiki.ros.org/melodic/Installation))
+
+2. Install rosserial_python 
+
+```apt-get install ros-melodic-rosserial-python```
+
+
+## start rosserial_server
+```source /opt/ros/melodic/setup.bash```
+
+```rosrun rosserial_python serial_node.py tcp``` (default)
+```rosrun rosserial_python node.py tcp```   (on Roboy)

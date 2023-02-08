@@ -3,8 +3,16 @@
 #include <std_msgs/String.h>
 #include <Adafruit_INA260.h>
 #include "std_msgs/Float32.h"
-#include "config.h"
 
+//Set the rosserial_python server address
+IPAddress server(192, 168, 0, 105);
+const char *ssid = "roboy-robot";
+const char *password = "**********";
+// Set the rosserial socket server port default to11411
+const uint16_t serverPort = 11411;
+
+// Loop exproximativly at 1Hz
+#define timeInterval 1000
 
 Adafruit_INA260 ina260 = Adafruit_INA260();
 
