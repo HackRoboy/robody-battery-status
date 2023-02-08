@@ -9,20 +9,32 @@
 # Cable Connect
 ## INO260
 VCC - 3V3(esp8266)
+
 GND - common! ground
+
 SCL - SCL(esp8266 default 5)
+
 SDA - SDA(esp8266 default 4)
+
 Alert
+
 VBus
+
 Vin+ - emergency button
+
 Vin- - Buck module
 
 ## ESP8266
 3V - VCC(INO260)
+
 USB - 5v(5V Buck module)
+
 SCL - SCL(INO260)
+
 SDA - SDA(INO260)
+
 GND - common! ground
+
 
 # ROS Server
 ##  Install
