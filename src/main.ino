@@ -1,15 +1,25 @@
-#include <ESP8266WiFi.h>
-#include <ros.h>
+// #define USE_WIFI
+
 #include <std_msgs/String.h>
 #include <Adafruit_INA260.h>
 #include "std_msgs/Float32.h"
+#include <ros.h>
 
+
+#ifdef USE_WIFI
+
+#include <ESP8266WiFi.h>
 //Set the rosserial_python server address
-IPAddress server(192, 168, 0, 105);
+IPAddress server(192,168,0,1);
 const char *ssid = "roboy-robot";
-const char *password = "**********";
-// Set the rosserial socket server port default to11411
+const char *password = "**************8";
+
+// Set the rosserial socket server port default to 11411
 const uint16_t serverPort = 11411;
+
+#endif
+
+
 
 // Loop exproximativly at 1Hz
 #define timeInterval 1000
@@ -36,8 +46,11 @@ ros::Publisher current_status_pub("/roboy/pinky/middleware/battery/status/curren
 std_msgs::Float32 battery_status_power_msg;
 ros::Publisher power_status_pub("/roboy/pinky/middleware/battery/status/power", &battery_status_power_msg);
 
-std_msgs::Float32 battery_status_capacity_msg;
-ros::Publisher capacity_status_pub("/roboy/pinky/middleware/battery/status/capacityPercentage", &battery_status_capacity_msg);
+std_msgs::String battery_status_log_msg;
+ros::Publisher log_msg_pub("/roboy/pinky/middleware/battery/status/log", &battery_status_log_msg);
+// the capacityPercentage caculation will be moved to the Node-red
+// std_msgs::Float32 battery_status_capacity_msg;
+// ros::Publisher capacity_status_pub("/roboy/pinky/middleware/battery/status/capacityPercentage", &battery_status_capacity_msg);
 
 // ros::Subscriber<std_msgs::String> sub("blinkm", light_cb);
 // Be polite and say hello
@@ -50,27 +63,40 @@ void setup()
   // analogWriteRange(53687); esp8266 has a known issue with analogWriteRange bigger than 53687
 
   // Use ESP8266 serial to monitor the process
-  Serial.begin(115200);
+  // delay(1000);
+  Serial.begin(9600);
+  
   while (!Serial)
   {
     delay(10);
   }
-
   Serial.println("Serial Connected");
+
+  #ifdef USE_WIFI
+  Serial.println("Serial Connected");
+  #endif
 
   if (!ina260.begin())
   {
+    #ifdef USE_WIFI
     Serial.println("Couldn't find INA260 chip");
+    #endif
+
     while (1)
       ;
   }
+
+  #ifdef USE_WIFI
   Serial.println("Found INA260 chip");
   printBatteryStatus();
+  #endif
 
+  #ifdef USE_WIFI
   Serial.println();
   Serial.print("Connecting to ");
   Serial.println(ssid);
 
+  
   // Connect the ESP8266 the the wifi AP
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED)
@@ -82,22 +108,28 @@ void setup()
   Serial.println("WiFi connected");
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
-
   // Set the connection to rosserial socket server
   nh.getHardware()->setConnection(server, serverPort);
+
+  #endif
+
+  // #ifndef USE_WIFI
+  // nh.getHardware()->setBaudRate(115200);
+  // #endif
   nh.initNode();
 
+  #ifdef USE_WIFI
   // Another way to get IP
   Serial.print("IP = ");
   Serial.println(nh.getHardware()->getLocalIP());
+  #endif
 
   // Start to be polite
   nh.advertise(voltage_status_pub);
   nh.advertise(current_status_pub);
   nh.advertise(power_status_pub);
-  nh.advertise(capacity_status_pub);
+  // nh.advertise(log_msg_pub);
 
-  // nh.advertise(chatter);
 }
 void printBatteryStatus()
 // void printBatteryStatus(bool printStatus = false)
@@ -118,10 +150,7 @@ void printBatteryStatus()
   Serial.print(power);
   Serial.println(" W");
 
-  Serial.print("capacity: ");
-  Serial.print(power);
-  Serial.println(" %");
-  Serial.println();
+
 }
 void publishBatteryVoltageStatus()
 {
@@ -140,25 +169,25 @@ void publishBatteryPowerStatus()
   battery_status_power_msg.data = ina260.readPower()/1000.0;
   power_status_pub.publish(&battery_status_power_msg);
 }
-void publishBatteryCapacityStatus()
-{
-  float voltage;
-  voltage = ina260.readBusVoltage() / 1000.0;
-  battery_status_capacity_msg.data = getVoltageToCapacityPercentage(voltage);
-  capacity_status_pub.publish(&battery_status_capacity_msg);
-}
+// void publishBatteryCapacityStatus()
+// {
+//   float voltage;
+//   voltage = ina260.readBusVoltage() / 1000.0;
+//   battery_status_capacity_msg.data = getVoltageToCapacityPercentage(voltage);
+//   capacity_status_pub.publish(&battery_status_capacity_msg);
+// }
 void publishBatteryStatus()
 {
   publishBatteryVoltageStatus();
   publishBatteryCurrentStatus();
   publishBatteryPowerStatus();
-  publishBatteryCapacityStatus();
+  // publishBatteryCapacityStatus();
 }
 
 float getVoltageToCapacityPercentage(float voltage)
 {
-  const float Vmin = 24.0;
-  const float Vmax = 27.6; // no load 28.2V
+  const float Vmin = 23.7;
+  const float Vmax = 29.4; 
   if (voltage > Vmax)
   {
     return 100.0;
@@ -173,21 +202,27 @@ float getVoltageToCapacityPercentage(float voltage)
 
 void loop()
 {
-  printBatteryStatus();
-
+  
+  
   if (nh.connected())
   {
+
+    #ifdef USE_WIFI
     Serial.println("Connected");
     // Say hello
 
     // str_msg.data = hello;
     // chatter.publish(&str_msg);
+    #endif
     publishBatteryStatus();
   }
   else
   {
-    Serial.println("Not Connected");
+    Serial.println("Not Connected to ros");
+    printBatteryStatus();
+    Serial.println("");
   }
   nh.spinOnce();
   delay(timeInterval);
 }
+
